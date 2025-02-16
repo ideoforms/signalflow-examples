@@ -2,12 +2,13 @@
 
 import cv2
 import mediapipe as mp
+from signalflow import *
+
+# Initialize MediaPipe Hands
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
 
 def main():
-    # Initialize MediaPipe Hands
-    mp_hands = mp.solutions.hands
-    mp_drawing = mp.solutions.drawing_utils
-
     # Open webcam
     cap = cv2.VideoCapture(0)
 
@@ -33,8 +34,8 @@ def main():
                 for hand_landmarks in results.multi_hand_landmarks:
                     # Draw landmarks on the frame
                     mp_drawing.draw_landmarks(frame,
-                                            hand_landmarks,
-                                            mp_hands.HAND_CONNECTIONS)
+                                              hand_landmarks,
+                                              mp_hands.HAND_CONNECTIONS)
 
             # Display the frame
             cv2.imshow("Hand tracker", frame)
@@ -46,6 +47,7 @@ def main():
     # Release resources
     cap.release()
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()

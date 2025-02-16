@@ -8,8 +8,28 @@ from mediapipe.tasks.python.core.base_options import BaseOptions
 from mediapipe.tasks.python.vision import RunningMode
 from mediapipe import Image
 
+from signalflow import *
+
 
 def main():
+    graph = AudioGraph()
+    noise = WhiteNoise() * 0.5
+    filter = SVFilter(noise, "low_pass", cutoff=400, resonance=0.9)
+    filter_stereo = StereoPanner(filter)
+    filter_stereo.play()
+
+    samples = {
+        "Thumb_Up": "ClopTone Eb3.wav",
+        "Closed_Fist": "Chord Computer.wav",
+    }
+
+    players = {}
+    for gesture_name, sample in samples.items():
+        buffer = Buffer(f"../../audio/{sample}")
+        player = BufferPlayer(buffer, clock=0)
+        player.play()
+        players[gesture_name] = player
+
     # Initialize MediaPipe Hands (for hand landmark tracking)
     mp_hands = mp.solutions.hands
     mp_drawing = mp.solutions.drawing_utils
@@ -22,6 +42,8 @@ def main():
             detected_gesture = result.gestures[0][0].category_name
             if detected_gesture != last_gesture:
                 print(f"Gesture Recognized: {detected_gesture}")
+                if detected_gesture in players:
+                    players[detected_gesture].trigger()
                 last_gesture = detected_gesture
 
     # Load MediaPipe's Gesture Recognizer model with a callback
@@ -45,6 +67,8 @@ def main():
             if not ret:
                 break
 
+            frame = cv2.flip(frame, 1)
+
             # Convert frame to RGB (MediaPipe requires RGB input)
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -66,11 +90,9 @@ def main():
                                               hand_landmarks,
                                               mp_hands.HAND_CONNECTIONS)
 
-                    # Optionally: Draw hand landmarks on the image
-                    for landmark in hand_landmarks.landmark:
-                        h, w, c = frame.shape
-                        cx, cy = int(landmark.x * w), int(landmark.y * h)
-                        cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+                    x = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x
+                    cutoff = scale_lin_exp(x, 0, 1, 40, 4000)
+                    filter.cutoff = cutoff
 
             # Display the frame
             cv2.imshow("Gesture Recognition + Hand Tracking", frame)
