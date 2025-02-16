@@ -69,7 +69,7 @@ def main():
                 voices[note].play()
         except AttributeError:
             if key == keyboard.Key.esc:
-                global running
+                nonlocal running
                 print("Exiting...")
                 running = False
         except KeyError:
