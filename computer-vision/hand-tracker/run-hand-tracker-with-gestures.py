@@ -13,10 +13,19 @@ from signalflow import *
 
 def main():
     graph = AudioGraph()
-    noise = WhiteNoise() * 0.5
-    filter = SVFilter(noise, "low_pass", cutoff=400, resonance=0.9)
-    filter_stereo = StereoPanner(filter)
-    filter_stereo.play()
+
+    class Whoosh (Patch):
+        def __init__(self):
+            super().__init__()
+            cutoff = self.add_input("cutoff", 400)
+            noise = WhiteNoise() * 0.5
+            filter = SVFilter(noise, "low_pass", cutoff=Smooth(cutoff, 0.999), resonance=0.95)
+            delay = CombDelay(filter, 0.2, feedback=0.7)
+            filter_stereo = StereoPanner(filter + delay * 0.5)
+            self.set_output(filter_stereo)
+
+    whoosh = Whoosh()
+    whoosh.play()
 
     samples = {
         "Thumb_Up": "ClopTone Eb3.wav",
@@ -41,7 +50,7 @@ def main():
         if result.gestures:
             detected_gesture = result.gestures[0][0].category_name
             if detected_gesture != last_gesture:
-                print(f"Gesture Recognized: {detected_gesture}")
+                print(f"Gesture recognized: {detected_gesture}")
                 if detected_gesture in players:
                     players[detected_gesture].trigger()
                 last_gesture = detected_gesture
@@ -52,9 +61,6 @@ def main():
                                        result_callback=gesture_callback)
     recognizer = GestureRecognizer.create_from_options(options)
 
-    # Open webcam
-    cap = cv2.VideoCapture(0)
-
     # Initialize Hands tracking
     with mp_hands.Hands(static_image_mode=False,
                         max_num_hands=2,
@@ -62,6 +68,10 @@ def main():
                         min_tracking_confidence=0.5) as hands:
 
         t0 = datetime.datetime.now()
+
+        # Open webcam
+        cap = cv2.VideoCapture(0)
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -85,14 +95,16 @@ def main():
 
             # If hands are detected, draw landmarks
             if results.multi_hand_landmarks:
-                for hand_landmarks in results.multi_hand_landmarks:
+                for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
+                                                      results.multi_handedness):
                     mp_drawing.draw_landmarks(frame,
                                               hand_landmarks,
                                               mp_hands.HAND_CONNECTIONS)
 
-                    x = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x
-                    cutoff = scale_lin_exp(x, 0, 1, 40, 4000)
-                    filter.cutoff = cutoff
+                    if handedness.classification[0].label == "Right":
+                        x = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x
+                        cutoff = scale_lin_exp(x, 0, 1, 40, 4000)
+                        whoosh.set_input("cutoff", cutoff)
 
             # Display the frame
             cv2.imshow("Gesture Recognition + Hand Tracking", frame)
@@ -101,9 +113,9 @@ def main():
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
-    # Release resources
-    cap.release()
-    cv2.destroyAllWindows()
+        # Release resources
+        cap.release()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
