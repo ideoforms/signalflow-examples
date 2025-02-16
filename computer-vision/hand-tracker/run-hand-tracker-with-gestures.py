@@ -77,6 +77,7 @@ def main():
             if not ret:
                 break
 
+            # Flip frame so that it appears in the natural mirror orientation
             frame = cv2.flip(frame, 1)
 
             # Convert frame to RGB (MediaPipe requires RGB input)
