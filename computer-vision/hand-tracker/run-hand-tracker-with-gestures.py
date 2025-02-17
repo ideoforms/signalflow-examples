@@ -63,7 +63,7 @@ def main():
 
     # Initialize Hands tracking
     with mp_hands.Hands(static_image_mode=False,
-                        max_num_hands=2,
+                        max_num_hands=8,
                         min_detection_confidence=0.5,
                         min_tracking_confidence=0.5) as hands:
 
