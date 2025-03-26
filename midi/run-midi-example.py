@@ -2,7 +2,7 @@
 
 #--------------------------------------------------------------------------------
 # SignalFlow: MIDI control example
-# Requires a controller configured to send CC messages 1..8
+# Requires a controller configured to send CC messages 1..10
 #--------------------------------------------------------------------------------
 
 from signalflow import *
