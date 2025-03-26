@@ -1,34 +1,35 @@
 #!/usr/bin/env python3
 
 # --------------------------------------------------------------------------------
-# SignalFlow: Computer keyboard piano example
-# Captures keyboard events to play the computer keyboard like a piano.
-#
-# Rows q-p and z-m correspond to white keys, with black keys above them.
+# SignalFlow: Computer keyboard drum machine example
+# Captures keyboard events to trigger samples
 # --------------------------------------------------------------------------------
 
 from signalflow import *
 from pynput import keyboard
 import time
 import glob
-import random
+import argparse
 
-def main():
+def main(audio_root):
     graph = AudioGraph()
 
     class SamplePlayer (Patch):
         def __init__(self, buffer):
             super().__init__()
             player = BufferPlayer(buffer, loop=False)
+            if buffer.num_channels == 1:
+                player = StereoPanner(player)
+            
             self.set_output(player)
             self.set_auto_free(True)
 
-    audio_root = "/Users/daniel/Projects/SignalFlow/Code/signalflow/notebooks/timbre-tools/audio/200-drum-machines"
     audio_files = glob.glob(f"{audio_root}/*.wav")
     buffers = {}
     for char_code in range(ord('a'), ord('z') + 1):
         char = chr(char_code)
-        audio_file = random.choice(audio_files)
+        drum_index = char_code - ord('a')
+        audio_file = audio_files[drum_index % len(audio_files)]
         buffers[char] = Buffer(audio_file)
 
     def on_press(key):
@@ -48,7 +49,7 @@ def main():
                                  suppress=True)
     listener.start()
 
-    print("Listening for notes...")
+    print("Listening for trigger events on keys 'a' to 'z'...")
     print("Press [esc] to exit")
 
     running = True
@@ -57,4 +58,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run the computer keyboard drum machine.")
+    parser.add_argument("audio_root", type=str, help="Path to the directory containing audio files.")
+    args = parser.parse_args()
+
+    main(args.audio_root)
