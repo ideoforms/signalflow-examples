@@ -18,12 +18,23 @@ class BreakCutter (Patch):
         cutter = BeatCutter(buffer=buffer,
                             # TODO: segment_count select between 2, 4, 8, 16, 32
                             segment_count=8,
-                            stutter_probability=MIDIControl(0, 0, 1),
-                            stutter_count=MIDIControl(1, 1, 32, curve="exponential"),
-                            jump_probability=MIDIControl(2, 0, 1),
+                            stutter_probability=MIDIControl(0, 0, 1, initial=0.0),
+                            stutter_count=MIDIControl(1, 1, 32, curve="exponential", initial=2),
+                            jump_probability=MIDIControl(2, 0, 1, initial=0),
                             duty_cycle=MIDIControl(3, 0, 1, initial=1.0),
                             segment_rate=MIDIControl(4, 0.25, 4, curve="exponential"))
-        self.set_output(cutter)
+        
+        # TODO: What is a better curve for resonance?
+        resonance = resonance=MIDIControl(10, 0.0, 0.99, curve="linear")
+        filter = SVFilter(cutter,"low_pass",
+                          cutoff=MIDIControl(8, 40, 10000, initial=10000, curve="exponential"),
+                          resonance=resonance)
+        filter = SVFilter(filter,
+                          "high_pass",
+                          cutoff=MIDIControl(9, 40, 20000, initial=40, curve="exponential"),
+                          resonance=resonance)
+
+        self.set_output(filter)
 
 
 def main(args):
