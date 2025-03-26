@@ -56,7 +56,7 @@ def main():
             frequency = frequency * random_uniform(0.99, 1.01)
             sine = Tanh(SineOscillator(frequency) * 1.25)
             gate = self.add_input("gate", gate)
-            env = ADSREnvelope(0.01, 0.1, 0.5, 2.0, gate=gate)
+            env = ADSREnvelope(0.01, 0.1, 0.5, 1.0, gate=gate)
             output = sine * env * 0.25
             self.set_output(output)
             self.set_auto_free_node(env)
@@ -93,7 +93,7 @@ def main():
                                 suppress=True)
     listener.start()
 
-    print("Listening for notes...")
+    print("Listening for note events...")
     print("Press [esc] to exit")
 
     running = True
