@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+#--------------------------------------------------------------------------------
+# SignalFlow: Hand tracker example
+# Sends MIDI triggers to the default MIDI device.
+#--------------------------------------------------------------------------------
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -7,20 +12,22 @@ from signalflow import *
 from isobar import *
 
 def map_x_to_note(x):
-    x_note = int(scale_lin_lin(x, 0, 1, 12, 40))
+    x_note = int(scale_lin_lin(x, 0, 1, 16, 44))
     return x_note
 
 def main():
     # Initialize MediaPipe Hands
     mp_hands = mp.solutions.hands
     mp_drawing = mp.solutions.drawing_utils
+    full_screen = False
 
     timeline = Timeline(150)
     timeline.start()
 
     sequence = PSequence([None, None, None, None, None])
-    timeline.schedule({
-        "note": PDegree(sequence, Key("C", "minorPenta")),
+    track = timeline.schedule({
+        "degree": sequence,
+        "key": Key("C", "minorPenta"),
         "duration": PSequence([0.25, 0.25, 0.25, 0.25, 0.5]),
     }, quantize=1)
 
@@ -32,8 +39,9 @@ def main():
 
         # Open webcam
         cap = cv2.VideoCapture(0)
-        cv2.namedWindow("handtracker", cv2.WND_PROP_FULLSCREEN)
-        cv2.setWindowProperty("handtracker", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        if full_screen:
+            cv2.namedWindow("handtracker", cv2.WND_PROP_FULLSCREEN)
+            cv2.setWindowProperty("handtracker", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -63,17 +71,21 @@ def main():
                         finger_0_pos = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
                         sequence.sequence[0] = map_x_to_note(finger_0_pos.x)
 
-                        finger_0_pos = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
-                        sequence.sequence[1] = map_x_to_note(finger_0_pos.x)
+                        finger_1_pos = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+                        sequence.sequence[1] = map_x_to_note(finger_1_pos.x)
                         
-                        finger_1_pos = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
-                        sequence.sequence[2] = map_x_to_note(finger_1_pos.x)
+                        finger_2_pos = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
+                        sequence.sequence[2] = map_x_to_note(finger_2_pos.x)
 
-                        finger_2_pos = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP]
-                        sequence.sequence[3] = map_x_to_note(finger_2_pos.x)
+                        finger_3_pos = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP]
+                        sequence.sequence[3] = map_x_to_note(finger_3_pos.x)
 
-                        finger_3_pos = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP]
-                        sequence.sequence[4] = map_x_to_note(finger_3_pos.x)
+                        finger_4_pos = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP]
+                        sequence.sequence[4] = map_x_to_note(finger_4_pos.x)
+                    else:
+                        finger_0_pos = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+                        transpose = int(scale_lin_lin(finger_0_pos.y, 1, 0, -3, 3)) * 2
+                        track.transpose = transpose
                         
             
             # Display the frame
