@@ -8,7 +8,7 @@ These examples are designed to take you through different approaches to sound de
 - [Computer vision](computer-vision): Using a webcam to do real-time hand tracking and body tracking, for gesture-based control of musical parameters
 - [Head tracker](head-tracker): Using the [Supperware head tracker](https://supperware.co.uk/headtracker-overview) for real-time low-latency spatial control
 - [MIDI](midi): Responding to MIDI CC values from an attached controller
-- [raspberry-pi](Raspberry Pi): Examples of sensor-based controls for the [Raspberry Pi](https://www.raspberrypi.com/) single-board computer, including IMU and time-of-flight sensors (requires additional hardware)
+- [Raspberry Pi](raspberry-pi): Examples of sensor-based controls for the [Raspberry Pi](https://www.raspberrypi.com/) single-board computer, including IMU and time-of-flight sensors (requires additional hardware)
 
 ## Tutorials
 
